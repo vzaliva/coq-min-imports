@@ -4,7 +4,7 @@ NATIVE_ENABLED = false
 OCAMLCFLAGS += -g -thread
 
 USE_OCAMLFIND = true
-OCAMLPACKS[] = extlib
+OCAMLPACKS[] = extlib batteries
 
 FILES = coq_min_imports
 

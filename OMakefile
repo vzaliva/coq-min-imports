@@ -1,0 +1,19 @@
+# Use the byte-code compiler
+BYTE_ENABLED = true
+NATIVE_ENABLED = false
+OCAMLCFLAGS += -g -thread
+
+USE_OCAMLFIND = true
+OCAMLPACKS[] = batteries
+
+FILES = coq_min_imports
+
+.PHONY: clean distclean
+
+clean:
+	rm -f *.cmo *.cmi coq_min_imports *.run
+
+#Build the program
+OCamlProgram(coq_min_imports, $(FILES))
+.DEFAULT: coq_min_imports
+

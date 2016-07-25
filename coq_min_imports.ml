@@ -10,7 +10,7 @@ let verbose = ref false
 let parse_cmd_line () =
   verbose := exists (String.equal "-cmi-verbose") Sys.argv;
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
-  let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-")) Sys.argv in 
+  let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) Sys.argv in 
   (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)
 
 let rec process_imports s p =
@@ -24,7 +24,7 @@ let rec process_imports s p =
       
 let process_file fname =
   if !verbose then Printf.printf "Processing %s" fname;
-  let s = input_file file in
+  let s = input_file fname in
   ignore (process_imports s (String.length s))
                                
 let () =

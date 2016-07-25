@@ -1,6 +1,6 @@
 Require Import Bool.DecBool.
  Require Import Arith.Min.
-Require Import   Omega.
+Require Import   Omega. (* comment *)
 Require Import BinNums  List Setoid.
 
 (* requires Arith.Min *)

@@ -8,10 +8,13 @@ OCAMLPACKS[] = extlib batteries
 
 FILES = coq_min_imports
 
-.PHONY: clean distclean
+.PHONY: clean distclean run
 
 clean:
 	rm -f *.cmo *.cmi coq_min_imports *.run
+
+run: coq_min_imports
+	./coq_min_imports Test.v
 
 #Build the program
 OCamlProgram(coq_min_imports, $(FILES))

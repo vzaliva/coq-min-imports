@@ -3,7 +3,7 @@ open Str
 open BatArray
        
 (* TODO: match mutliline import statements *)
-let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]*$"
+let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]*"
 
 let verbose = ref false
                                
@@ -16,7 +16,11 @@ let parse_cmd_line () =
 let rec process_imports s p =
   try
     let x = search_backward import_regexp s p in
-    Printf.printf "\t%d: %s\n" x (matched_string s);
+    let is = (matched_group 1 s) in
+    let isb = group_beginning 1 in
+    let ise = group_end 1 in
+    let il = Str.split (regexp "[ \t]+") is in
+    Printf.printf "\t%d: %s (%d)\n" x is (List.length il);
     if x=0 then s
     else process_imports s (x-1)
   with

@@ -6,6 +6,10 @@ open BatList
 let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]*"
 
 let verbose = ref false
+let debug = ref false
+let nilstrlst:(string list) = []
+let coqargs = ref nilstrlst
+let coqcmd = ref "coqc"
                                
 let parse_cmd_line () =
   let open BatArray in
@@ -15,7 +19,16 @@ let parse_cmd_line () =
   (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)
 
 let try_compile s =
-  false
+  let open BatFile in
+  let open BatIO in
+  let (out, name) = open_temporary_out ~mode:[`delete_on_exit ; `create] ~suffix:".v" () in
+  write_line out s;
+  close_out out;
+  (* TODO: use fork/execve to make sure arguments are properly passed *)
+  let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^ " > /dev/null 2>&1" in
+  if !verbose then Printf.printf "Executing: %s\n" cmd;
+  let res = BatSys.command cmd in
+  res == 0
 
 let rec process_require pre post lst res =
   match lst with
@@ -27,9 +40,15 @@ let rec process_require pre post lst res =
                   (if is_empty nl then "" else
                      "Require Import " ^ (String.concat " " nl) ^ ".\n")
                   ^ post in
-     Printf.printf "\n==================\n %s \n==================\n" body;
+     if !debug then Printf.printf "\n==================\n %s \n==================\n" body;
      process_require pre post xs
-                     (if try_compile body then res else (cons x res))
+                     (if try_compile body then
+                        (if !verbose then Printf.printf "Removing: %s\n" x;
+                        res)
+                      else
+                        (if !verbose then Printf.printf "Not removing: %s\n" x;
+                        (cons x res))
+                     )
   
 let rec process_imports s p =
   try
@@ -56,6 +75,7 @@ let process_file fname =
                                
 let () =
   let (args,files) = parse_cmd_line () in
+  coqargs := tl (Array.to_list args);
   ignore (BatArray.map process_file files)
   
                 

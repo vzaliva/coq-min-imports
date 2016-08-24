@@ -28,6 +28,7 @@ let try_compile s =
   let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^ " > /dev/null 2>&1" in
   if !verbose then Printf.printf "Executing: %s\n" cmd;
   let res = BatSys.command cmd in
+  (* TODO: Remove generated files *)
   res == 0
 
 let rec process_require pre post lst res =

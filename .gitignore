@@ -29,4 +29,5 @@ OMakefile.omc
 OMakeroot.omc
 
 coq_min_imports
-
+*.new
+*.bak

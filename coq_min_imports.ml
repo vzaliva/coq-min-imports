@@ -75,12 +75,18 @@ let process_file fname =
   let s = input_file fname in
   let s' = process_imports s (String.length s) in
   if not (String.equal s s') then
+    let dumpf fn txt =
+      let open BatFile in
+      let open BatIO in
+      let out = open_out ~mode:[`create ; `trunc] fn in
+      write_line out txt;
+      close_out out in
     if !replace then
       let backup_fname = fname ^ ".bak" in
-      (if !verbose then Printf.printf "Writing modified copy of %s (saving %s)\n" fname backup_fname) ; Sys.rename fname backup_fname
+      (if !verbose then Printf.printf "Writing modified copy of %s (saving %s)\n" fname backup_fname) ; Sys.rename fname backup_fname ; dumpf fname s'
     else
       let new_fname = fname ^ ".new" in
-      (if !verbose then Printf.printf "Writing modified copy of %s as %s\n" fname new_fname)
+      (if !verbose then Printf.printf "Writing modified copy of %s as %s\n" fname new_fname) ; dumpf new_fname s'
   else
     (if !verbose then Printf.printf "Nothing to remove in %s\n" fname)
 

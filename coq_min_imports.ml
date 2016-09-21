@@ -28,7 +28,7 @@ let try_compile s =
   close_out out;
   (* TODO: use fork/execve to make sure arguments are properly passed *)
   let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^ " > /dev/null 2>&1" in
-  if !verbose then Printf.printf "Executing: %s\n" cmd;
+  if !debug then Printf.printf "Executing: %s\n" cmd;
   let res = BatSys.command cmd in
   (* TODO: Remove generated files *)
   res == 0
@@ -41,40 +41,41 @@ let rec process_require pre post lst res =
   match lst with
   | [] -> res
   | x::xs ->
-     Printf.printf "*** Trying to remove %s\n" x;
      let nl = ((rev xs)@res) in
      let body = pre ^ (gen_import nl) ^ post in
      if !debug then Printf.printf "\n==================\n %s \n==================\n" body;
      process_require pre post xs
                      (if try_compile body then
-                        (if !verbose then Printf.printf "Removing: %s\n" x;
+                        (if !verbose then Printf.printf "\t-%s\n" x;
                         res)
                       else
-                        (if !verbose then Printf.printf "Not removing: %s\n" x;
+                        (if !verbose then Printf.printf "\t+%s\n" x;
                         (cons x res))
                      )
   
-let rec process_imports s p =
-  try
-    let x = search_backward import_regexp s p in
-    let is = (matched_group 1 s) in
-    let me = match_end () in
-    let il = Str.split (regexp "[ \t]+") is in
-    Printf.printf "\t%d: %s (%d)\n" x is (List.length il);
-    let pre = (string_before s x) in
-    let post = (string_after s me) in
-    let il' = process_require pre post (rev il) [] in
-    let s' = if length il = length il' then s else
-         pre ^ gen_import il' ^ post in
-    if x=0 then s' else process_imports s' (x-1)
-  with
-    Not_found -> s
+let rec process_imports s p saved =
+  if p<0 then
+    (s,saved)
+  else
+    try
+      let x = search_backward import_regexp s p in
+      let is = (matched_group 1 s) in
+      let me = match_end () in
+      let il = Str.split (regexp "[ \t]+") is in
+      let pre = (string_before s x) in
+      let post = (string_after s me) in
+      let il' = process_require pre post (rev il) [] in
+      let saved' = length il - length il' in
+      let s' = if saved > 0 then s else pre ^ gen_import il' ^ post in
+      process_imports s' (x-1) (saved+saved')
+    with
+      Not_found -> (s, saved)
       
 let process_file fname =
-  if !verbose then Printf.printf "Processing %s" fname;
+  if !verbose then Printf.printf "Processing %s\n" fname;
   let s = input_file fname in
-  let s' = process_imports s (String.length s) in
-  if not (String.equal s s') then
+  let (s',saved) = process_imports s (String.length s) 0 in
+  if saved>0 then
     let dumpf fn txt =
       let open BatFile in
       let open BatIO in
@@ -83,10 +84,10 @@ let process_file fname =
       close_out out in
     if !replace then
       let backup_fname = fname ^ ".bak" in
-      (if !verbose then Printf.printf "Writing modified copy of %s (saving %s)\n" fname backup_fname) ; Sys.rename fname backup_fname ; dumpf fname s'
+      (if !verbose then Printf.printf "Removing %d imports from %s (saving %s)\n" saved fname backup_fname) ; Sys.rename fname backup_fname ; dumpf fname s'
     else
       let new_fname = fname ^ ".new" in
-      (if !verbose then Printf.printf "Writing modified copy of %s as %s\n" fname new_fname) ; dumpf new_fname s'
+      (if !verbose then Printf.printf "Writing modified copy of %s as %s with %d imports removed\n" fname new_fname saved) ; dumpf new_fname s'
   else
     (if !verbose then Printf.printf "Nothing to remove in %s\n" fname)
 

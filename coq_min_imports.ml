@@ -31,16 +31,17 @@ let try_compile s =
   (* TODO: Remove generated files *)
   res == 0
 
+let gen_import lst =
+  (if is_empty lst then "" else
+     "Require Import " ^ (String.concat " " lst) ^ ".\n")
+
 let rec process_require pre post lst res =
   match lst with
   | [] -> res
   | x::xs ->
      Printf.printf "*** Trying to remove %s\n" x;
      let nl = ((rev xs)@res) in
-     let body = pre ^
-                  (if is_empty nl then "" else
-                     "Require Import " ^ (String.concat " " nl) ^ ".\n")
-                  ^ post in
+     let body = pre ^ (gen_import nl) ^ post in
      if !debug then Printf.printf "\n==================\n %s \n==================\n" body;
      process_require pre post xs
                      (if try_compile body then
@@ -58,14 +59,13 @@ let rec process_imports s p =
     let me = match_end () in
     let il = Str.split (regexp "[ \t]+") is in
     Printf.printf "\t%d: %s (%d)\n" x is (List.length il);
-    let _ = process_require
-              (string_before s x)
-              (string_after s me)
-              (rev il)
-              []
+    let newil = process_require (string_before s x) (string_after s me) (rev il) [] in
+    let news =
+      (if length il = length newil then s else
+         s (* TODO: replace gen_imports news in s*)
+      )
     in
-    if x=0 then s
-    else process_imports s (x-1)
+    if x=0 then news else process_imports news (x-1)
   with
     Not_found -> s
       

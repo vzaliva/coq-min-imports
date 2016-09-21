@@ -6,6 +6,7 @@ open BatList
 let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]*"
 
 let verbose = ref false
+let replace = ref false
 let debug = ref false
 let nilstrlst:(string list) = []
 let coqargs = ref nilstrlst
@@ -14,6 +15,7 @@ let coqcmd = ref "coqc"
 let parse_cmd_line () =
   let open BatArray in
   verbose := exists (String.equal "-cmi-verbose") Sys.argv;
+  replace := exists (String.equal "-cmi-replace") Sys.argv;
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
   let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) Sys.argv in 
   (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)
@@ -59,21 +61,29 @@ let rec process_imports s p =
     let me = match_end () in
     let il = Str.split (regexp "[ \t]+") is in
     Printf.printf "\t%d: %s (%d)\n" x is (List.length il);
-    let newil = process_require (string_before s x) (string_after s me) (rev il) [] in
-    let news =
-      (if length il = length newil then s else
-         s (* TODO: replace gen_imports news in s*)
-      )
-    in
-    if x=0 then news else process_imports news (x-1)
+    let pre = (string_before s x) in
+    let post = (string_after s me) in
+    let il' = process_require pre post (rev il) [] in
+    let s' = if length il = length il' then s else
+         pre ^ gen_import il' ^ post in
+    if x=0 then s' else process_imports s' (x-1)
   with
     Not_found -> s
       
 let process_file fname =
   if !verbose then Printf.printf "Processing %s" fname;
   let s = input_file fname in
-  ignore (process_imports s (String.length s))
-                               
+  let s' = process_imports s (String.length s) in
+  if not (String.equal s s') then
+    if !replace then
+      let backup_fname = fname ^ ".bak" in
+      (if !verbose then Printf.printf "Writing modified copy of %s (saving %s)\n" fname backup_fname) ; Sys.rename fname backup_fname
+    else
+      let new_fname = fname ^ ".new" in
+      (if !verbose then Printf.printf "Writing modified copy of %s as %s\n" fname new_fname)
+  else
+    (if !verbose then Printf.printf "Nothing to remove in %s\n" fname)
+
 let () =
   let (args,files) = parse_cmd_line () in
   coqargs := tl (Array.to_list args);

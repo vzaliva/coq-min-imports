@@ -1,7 +1,9 @@
 open Std
 open Str
 open BatList
-       
+open BatFile
+open BatIO
+
 (* TODO: match mutliline import statements *)
 let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]*"
 
@@ -11,18 +13,16 @@ let debug = ref false
 let nilstrlst:(string list) = []
 let coqargs = ref nilstrlst
 let coqcmd = ref "coqc"
-                               
+
 let parse_cmd_line () =
   let open BatArray in
   verbose := exists (String.equal "-cmi-verbose") Sys.argv;
   replace := exists (String.equal "-cmi-replace") Sys.argv;
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
-  let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) Sys.argv in 
+  let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) Sys.argv in
   (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)
 
 let try_compile s =
-  let open BatFile in
-  let open BatIO in
   let (out, name) = open_temporary_out ~mode:[`delete_on_exit ; `create] ~suffix:".v" () in
   write_line out s;
   close_out out;
@@ -47,12 +47,12 @@ let rec process_require pre post lst res =
      process_require pre post xs
                      (if try_compile body then
                         (if !verbose then Printf.printf "\t-%s\n" x;
-                        res)
+                         res)
                       else
                         (if !verbose then Printf.printf "\t+%s\n" x;
-                        (cons x res))
+                         (cons x res))
                      )
-  
+
 let rec process_imports s p saved =
   if p<0 then
     (s,saved)
@@ -70,15 +70,13 @@ let rec process_imports s p saved =
       process_imports s' (x-1) (saved+saved')
     with
       Not_found -> (s, saved)
-      
+
 let process_file fname =
   if !verbose then Printf.printf "Processing %s\n" fname;
   let s = input_file fname in
   let (s',saved) = process_imports s (String.length s) 0 in
   if saved>0 then
     let dumpf fn txt =
-      let open BatFile in
-      let open BatIO in
       let out = open_out ~mode:[`create ; `trunc] fn in
       write_line out txt;
       close_out out in
@@ -95,5 +93,3 @@ let () =
   let (args,files) = parse_cmd_line () in
   coqargs := tl (Array.to_list args);
   ignore (BatArray.map process_file files)
-  
-                

@@ -6,7 +6,7 @@ OCAMLCFLAGS += -g -thread
 USE_OCAMLFIND = true
 OCAMLPACKS[] = extlib batteries
 
-FILES = coq_min_imports
+FILES = coq_min_imports dirtools
 
 .PHONY: clean distclean run
 

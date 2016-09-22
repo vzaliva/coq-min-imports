@@ -26,7 +26,7 @@ let parse_cmd_line () =
   (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)
 
 let try_compile s =
-  let d = make_tmp_dir 0o755 "coq_min_imports" ".tmpdir" in
+  let d = make_tmp_dir 0o755 ~prefix:"coq_min_imports" ~suffix:".tmpdir" in
   let (out, name) = open_temporary_out ~mode:[`delete_on_exit ; `create] ~suffix:".v" ~temp_dir:d () in
   write_line out s;
   close_out out;

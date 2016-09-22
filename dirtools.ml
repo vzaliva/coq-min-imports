@@ -1,6 +1,6 @@
 open Unix
 
-(* Create temporary directory. Could raise Unix_error. *)
+(* Create temporary directory and returns name. Could raise Unix_error. *)
 let rec make_tmp_dir ?root ?max_retries:(r=10) dir_perm prefix suffix  =
   let root_dir =  match root with
     | Some v -> v

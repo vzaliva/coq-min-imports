@@ -26,15 +26,16 @@ let parse_cmd_line () =
   (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)
 
 let try_compile s =
-  let (out, name) = open_temporary_out ~mode:[`delete_on_exit ; `create] ~suffix:".v" () in
+  let d = make_tmp_dir 0o755 "coq_min_imports" ".tmpdir" in
+  let (out, name) = open_temporary_out ~mode:[`delete_on_exit ; `create] ~suffix:".v" ~temp_dir:d () in
   write_line out s;
   close_out out;
   (* TODO: use fork/execve to make sure arguments are properly passed *)
   let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^ " > /dev/null 2>&1" in
   if !debug then Printf.printf "Executing: %s\n" cmd;
   let res = BatSys.command cmd in
-  (* TODO: Remove generated files *)
-  res == 0
+  rmrf d ; (*TODO: make sure directory removed on exceptin *)
+  (res == 0)
 
 let gen_import lst =
   (if is_empty lst then "" else

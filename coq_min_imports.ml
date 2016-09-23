@@ -29,9 +29,14 @@ let parse_cmd_line () =
   let (files, justargs) = partition (fun x -> string_match fname_regexp x 0) args in
   let (cmiargs, newargs) = partition (fun x -> BatString.starts_with x "-cmi-") justargs in
   let flags = [("-cmi-verbose", verbose) ; ("-cmi-replace", replace) ; ("-cmi-debug", debug) ; ("-cmi-wrap", wrap) ] in
+  let options = [("-cmi-coqc", coqcmd)] in
   ignore (map (fun n ->
               try
-                assoc n flags := true
+                if BatString.contains n '=' then
+                  let (on,ov) = BatString.split n "=" in
+                  assoc on options := ov
+                else
+                  assoc n flags := true
               with
                 Not_found -> raise (BadArg n)
             ) cmiargs);
@@ -115,7 +120,7 @@ let () =
   try
     let (args,files) = parse_cmd_line () in
     if is_empty files then
-      (Printf.printf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] <files...>\n" ; exit 1)
+      (Printf.printf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] [-cmi-coqc=cmd]  <files...>\n" ; exit 1)
     else
       (coqargs := tl args;
        let saved = fold_left (+) 0 (map process_file files) in

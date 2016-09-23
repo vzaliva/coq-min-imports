@@ -26,15 +26,18 @@ let parse_cmd_line () =
   let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) args in
   (newargs, filter (fun x -> string_match fname_regexp x 0) args)
 
+let compile name quiet =
+  let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^
+              (if quiet then " > /dev/null 2>&1" else "") in
+  if !debug then Printf.printf "Executing: %s\n" cmd;
+  BatSys.command cmd
+
 let try_compile s =
   let d = make_tmp_dir 0o755 ~prefix:"coq_min_imports" ~suffix:".tmpdir" in
   let (out, name) = open_temporary_out ~mode:[`create] ~suffix:".v" ~temp_dir:d () in
   write_line out s;
   close_out out;
-  (* TODO: use fork/execve to make sure arguments are properly passed *)
-  let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^ " > /dev/null 2>&1" in
-  if !debug then Printf.printf "Executing: %s\n" cmd;
-  let res = BatSys.command cmd in
+  let res = compile name true in
   rmrf d ;
   (res == 0)
 
@@ -102,5 +105,6 @@ let () =
   else
     (coqargs := tl args;
      let saved = fold_left (+) 0 (map process_file files) in
-     if !verbose then Printf.printf "Removed %d imports from %d files\n" saved (length files)
+     if !verbose then Printf.printf "Removed %d imports from %d files\n" saved (length files);
+     if !wrap then exit (compile (String.concat " " files) false)
     )

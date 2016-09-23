@@ -12,7 +12,7 @@ let rec make_tmp_dir ?root ?max_retries:(r=10) ?prefix ?suffix dir_perm  =
   with
     Unix_error (err, fun_name, arg) ->
     if r>0 then
-      make_tmp_dir ~root:root' ~max_retries:(r-1) ?prefix ?suffix dir_perm
+      make_tmp_dir ?root ~max_retries:(r-1) ?prefix ?suffix dir_perm
     else
       (* re-raise last exception *)
       raise (Unix_error (err, fun_name, arg))

@@ -12,15 +12,15 @@ let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]
 let verbose = ref false
 let replace = ref false
 let debug = ref false
+
 let nilstrlst:(string list) = []
 let coqargs = ref nilstrlst
 let coqcmd = ref "coqc"
 
 let parse_cmd_line () =
   let open BatArray in
-  verbose := exists (String.equal "-cmi-verbose") Sys.argv;
-  replace := exists (String.equal "-cmi-replace") Sys.argv;
-  debug := exists (String.equal "-cmi-debug") Sys.argv;
+  let flags = [(verbose,"-cmi-verbose") ; (replace, "-cmi-replace") ; (debug,"-cmi-debug") ] in
+  ignore (List.map (fun (r,n) -> r:= exists (String.equal n) Sys.argv) flags);
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
   let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) Sys.argv in
   (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)

@@ -12,6 +12,7 @@ let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]
 let verbose = ref false
 let replace = ref false
 let debug = ref false
+let wrap = ref false
 
 let nilstrlst:(string list) = []
 let coqargs = ref nilstrlst
@@ -19,7 +20,7 @@ let coqcmd = ref "coqc"
 
 let parse_cmd_line () =
   let args = Array.to_list Sys.argv in
-  let flags = [(verbose,"-cmi-verbose") ; (replace, "-cmi-replace") ; (debug,"-cmi-debug") ] in
+  let flags = [(verbose,"-cmi-verbose") ; (replace, "-cmi-replace") ; (debug,"-cmi-debug") ; (wrap, "-cmi-wrap") ] in
   ignore (map (fun (r,n) -> r:= exists (String.equal n) args) flags);
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
   let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) args in
@@ -92,10 +93,14 @@ let process_file fname =
       (if !verbose then Printf.printf "Writing modified copy of %s as %s with %d imports removed\n" fname new_fname saved) ; dumpf new_fname s'
   else
     (if !verbose then Printf.printf "Nothing to remove in %s\n" fname)
+  ; saved
 
 let () =
   let (args,files) = parse_cmd_line () in
   if is_empty files then
-    (Printf.printf "Usage: coq_min_imports <coq_flags> <files...>\n" ; exit 1)
+    (Printf.printf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] <files...>\n" ; exit 1)
   else
-    (coqargs := tl args; ignore (map process_file files))
+    (coqargs := tl args;
+     let saved = fold_left (+) 0 (map process_file files) in
+     if !verbose then Printf.printf "Removed %d imports from %d files\n" saved (length files)
+    )

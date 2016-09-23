@@ -20,7 +20,7 @@ let coqcmd = ref "coqc"
 let parse_cmd_line () =
   let args = Array.to_list Sys.argv in
   let flags = [(verbose,"-cmi-verbose") ; (replace, "-cmi-replace") ; (debug,"-cmi-debug") ] in
-  ignore (List.map (fun (r,n) -> r:= exists (String.equal n) args) flags);
+  ignore (map (fun (r,n) -> r:= exists (String.equal n) args) flags);
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
   let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) args in
   (newargs, filter (fun x -> string_match fname_regexp x 0) args)

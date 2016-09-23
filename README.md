@@ -52,7 +52,7 @@ where
 * __-cmi-verbose__ - enable verbose reporting
 * __-cmi-replace__ - replace processed files with optmized versions (orignals are saved with the *".bak"* suffix). Otherwise, the optimized versions are written as a new files with the same name as the input but adding *".new"* suffix
 * __-cmi-wrap__ - run in a coqc-wrapper mode, compiling the files as the side-effect
-* __-cmi-coqc=*&lt;command>*__ - use *&lt;command>* instead of *coqc*
+* __-cmi-coqc=*&lt;command>*__ - use the *&lt;command>* instead of *coqc*
 
 
 ## Author

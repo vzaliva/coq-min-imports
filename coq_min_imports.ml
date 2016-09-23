@@ -18,20 +18,33 @@ let nilstrlst:(string list) = []
 let coqargs = ref nilstrlst
 let coqcmd = ref "coqc"
 
+
+(** Exception to report unknown argument *)
+exception BadArg of string
+
+(** Parse command line, set options flags, and return pair containing list of coq options and list of .v files to be processed *)
 let parse_cmd_line () =
   let args = Array.to_list Sys.argv in
-  let flags = [(verbose,"-cmi-verbose") ; (replace, "-cmi-replace") ; (debug,"-cmi-debug") ; (wrap, "-cmi-wrap") ] in
-  ignore (map (fun (r,n) -> r:= exists (String.equal n) args) flags);
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
-  let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) args in
-  (newargs, filter (fun x -> string_match fname_regexp x 0) args)
+  let (files, justargs) = partition (fun x -> string_match fname_regexp x 0) args in
+  let (cmiargs, newargs) = partition (fun x -> BatString.starts_with x "-cmi-") justargs in
+  let flags = [("-cmi-verbose", verbose) ; ("-cmi-replace", replace) ; ("-cmi-debug", debug) ; ("-cmi-wrap", wrap) ] in
+  ignore (map (fun n ->
+              try
+                assoc n flags := true
+              with
+                Not_found -> raise (BadArg n)
+            ) cmiargs);
+  (newargs, files)
 
+(** Run Coq compiler on given file and return exit code. 'quiet' flag supresses compiler output *)
 let compile name quiet =
   let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^
               (if quiet then " > /dev/null 2>&1" else "") in
   if !debug then Printf.printf "Executing: %s\n" cmd;
   BatSys.command cmd
 
+(** Try to compile given coq program and return exit code. *)
 let try_compile s =
   let d = make_tmp_dir 0o755 ~prefix:"coq_min_imports" ~suffix:".tmpdir" in
   let (out, name) = open_temporary_out ~mode:[`create] ~suffix:".v" ~temp_dir:d () in
@@ -99,12 +112,15 @@ let process_file fname =
   ; saved
 
 let () =
-  let (args,files) = parse_cmd_line () in
-  if is_empty files then
-    (Printf.printf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] <files...>\n" ; exit 1)
-  else
-    (coqargs := tl args;
-     let saved = fold_left (+) 0 (map process_file files) in
-     if !verbose then Printf.printf "Removed %d imports from %d files\n" saved (length files);
-     if !wrap then exit (compile (String.concat " " files) false)
-    )
+  try
+    let (args,files) = parse_cmd_line () in
+    if is_empty files then
+      (Printf.printf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] <files...>\n" ; exit 1)
+    else
+      (coqargs := tl args;
+       let saved = fold_left (+) 0 (map process_file files) in
+       if !verbose then Printf.printf "Removed %d imports from %d files\n" saved (length files);
+       if !wrap then exit (compile (String.concat " " files) false)
+      )
+  with
+    BadArg n -> Printf.printf "Unknown argument %s\n" n; exit 1

@@ -18,12 +18,12 @@ let coqargs = ref nilstrlst
 let coqcmd = ref "coqc"
 
 let parse_cmd_line () =
-  let open BatArray in
+  let args = Array.to_list Sys.argv in
   let flags = [(verbose,"-cmi-verbose") ; (replace, "-cmi-replace") ; (debug,"-cmi-debug") ] in
-  ignore (List.map (fun (r,n) -> r:= exists (String.equal n) Sys.argv) flags);
+  ignore (List.map (fun (r,n) -> r:= exists (String.equal n) args) flags);
   let fname_regexp = regexp "[A-Za-z_][A-Za-z_']+\\.v" in (* TODO: unicode *)
-  let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) Sys.argv in
-  (newargs, filter (fun x -> string_match fname_regexp x 0) Sys.argv)
+  let newargs = filter (fun x -> not (BatString.starts_with x "-cmi-") && not (string_match fname_regexp x 0)) args in
+  (newargs, filter (fun x -> string_match fname_regexp x 0) args)
 
 let try_compile s =
   let d = make_tmp_dir 0o755 ~prefix:"coq_min_imports" ~suffix:".tmpdir" in
@@ -95,7 +95,7 @@ let process_file fname =
 
 let () =
   let (args,files) = parse_cmd_line () in
-  if Array.length files = 0 then
+  if is_empty files then
     (Printf.printf "Usage: coq_min_imports <coq_flags> <files...>\n" ; exit 1)
   else
-    (coqargs := tl (Array.to_list args); ignore (BatArray.map process_file files))
+    (coqargs := tl args; ignore (map process_file files))

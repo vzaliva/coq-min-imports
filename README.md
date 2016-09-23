@@ -1,7 +1,10 @@
 # coq-min-imports
 Script to remove unnecessary package imports from Coq module
 
-Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] <files...>
+Usage: 
+======
+
+    coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] <files...>
 
 where
 
@@ -12,4 +15,7 @@ where
     -cmi-wrap - run in a compiler wrapper mode, compiling the files as the side-effect
 
 
-Author: Vadim Zaliva <lord@crocodile.org>
+Author
+======
+
+Vadim Zaliva <lord@crocodile.org>

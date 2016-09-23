@@ -1,6 +1,6 @@
 open Unix
 
-(* Create temporary directory and returns name. Could raise Unix_error. *)
+(** Creates temporary directory and in the most safe manner with given permissions and returns its name. Could raise Unix_error. *)
 let rec make_tmp_dir ?root ?max_retries:(r=10) ?prefix ?suffix dir_perm  =
   let open Option in
   let root' =  default (Filename.get_temp_dir_name ()) root
@@ -18,7 +18,7 @@ let rec make_tmp_dir ?root ?max_retries:(r=10) ?prefix ?suffix dir_perm  =
       raise (Unix_error (err, fun_name, arg))
 
 
-(* Remove directory along with all it's contents recursively. Inspired by https://ocaml.org/learn/tutorials/if_statements_loops_and_recursion.html but we try to minimize the number of open file handes at price of keeping a queue of directories to be removed in memory.
+(** Removes directory along with all it's contents recursively. Inspired by https://ocaml.org/learn/tutorials/if_statements_loops_and_recursion.html but we try to minimize the number of open file handes at price of keeping a queue of directories to be removed in memory.
  *)
 let rec rmrf path =
   let readdir_no_ex dirh =
@@ -32,8 +32,7 @@ let rec rmrf path =
     let filename = readdir_no_ex dirh in
     match filename with
       None -> []
-    | Some "." -> scan ()
-    | Some ".." -> scan ()
+    | Some "." | Some ".." -> scan ()
     | Some filename ->
        let pathname = path ^ "/" ^ filename in
        let stat = lstat pathname in

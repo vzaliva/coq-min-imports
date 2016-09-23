@@ -17,12 +17,12 @@ removed, a modified version will be saved with *.v.new* extension. If
 want to overwrite *.v* files rather than generate new versions, use
 *-cmi-replace* option.
 
-Sometimes removing an import does not cause the compilation to fail
-immediately but rather makes *coqc* to run for very long time. One
-workaround is to add a timeot to coqc invocation. This could be done
-using _timeout(1)_ shell wrapper. For example, the following command
-line option for *coq-min-imports*: *`-cmi-coqc="timeout 10s coqc"`*
-will impose 10 seconds compilation timout.
+Sometimes removing an import will not cause the compilation to fail
+immediately but rather makes *coqc* to run for a very long time. One
+workaround is to add a timeout to coqc invocation. This could be done
+using _timeout(1)_ shell wrapper. For example, using the following
+command line option with *coq-min-imports*: *`-cmi-coqc="timeout 10s
+coqc"`* will impose 10 seconds compilation timout.
 
 ## Example:
 
@@ -50,9 +50,9 @@ where
 * *__&lt;coq_flags>__* - any of optoins supported by *'coqc'*
 * *__&lt;files>__* - list of *.v* files to process
 * __-cmi-verbose__ - enable verbose reporting
-* __-cmi-replace__ - replace processed files with optmized versions (orignals are saved with the *".bak"* suffix). Otherwise, the optimized versions are written as a new files with the same name as the input but adding *".new"* suffix.
+* __-cmi-replace__ - replace processed files with optmized versions (orignals are saved with the *".bak"* suffix). Otherwise, the optimized versions are written as a new files with the same name as the input but adding *".new"* suffix
 * __-cmi-wrap__ - run in a coqc-wrapper mode, compiling the files as the side-effect
-* __-cmi-coqc=*command*__ - use *command* instead of *coqc*.
+* __-cmi-coqc=*&lt;command>*__ - use *&lt;command>* instead of *coqc*
 
 
 ## Author

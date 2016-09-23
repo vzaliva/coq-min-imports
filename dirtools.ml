@@ -17,14 +17,33 @@ let rec make_tmp_dir ?root ?max_retries:(r=10) ?prefix ?suffix dir_perm  =
       (* re-raise last exception *)
       raise (Unix_error (err, fun_name, arg))
 
-(* Remove directory along with all it's contents recursively *)
-(* hacky placeholder. Replace with proper implementation. Some samples:
-https://ocaml.org/learn/tutorials/if_statements_loops_and_recursion.html#Recursion *)
-let rmrf dirname =
-  let res = system ("rm -rf " ^ dirname) in
-  match res with
-  | WEXITED e -> if e!=0 then ignore (Unix_error (EUNKNOWNERR e, "rmrf", dirname))
-  | WSIGNALED e -> ignore (Unix_error (EINTR, "rmrf", dirname))
-  | WSTOPPED e -> ignore (Unix_error (EINTR, "rmrf", dirname))
 
+(* Remove directory along with all it's contents recursively. Inspired by https://ocaml.org/learn/tutorials/if_statements_loops_and_recursion.html but we try to minimize the number of open file handes at price of keeping a queue of directories to be removed in memory.
+ *)
+let rec rmrf path =
+  let readdir_no_ex dirh =
+    try
+      Some (readdir dirh)
+    with
+      End_of_file -> None
+  in
+  let dirh = opendir path in
+  let rec scan () =
+    let filename = readdir_no_ex dirh in
+    match filename with
+      None -> []
+    | Some "." -> scan ()
+    | Some ".." -> scan ()
+    | Some filename ->
+       let pathname = path ^ "/" ^ filename in
+       let stat = lstat pathname in
+       if stat.st_kind = S_DIR then
+         pathname :: (scan ())
+       else
+         (unlink pathname ; scan ())
+  in
+  let subdirs = scan () in
+  closedir dirh ;
+  ignore (List.map rmrf subdirs) ;
+  rmdir path
 

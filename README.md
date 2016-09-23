@@ -11,6 +11,23 @@ removed, a modified version will be saved with *.v.new* extension. If
 want to overwrite *.v* files rather than generate new versions, use
 *-cmi-replace* option.
 
+## Example:
+
+    $ coq_min_imports -cmi-verbose -cmi-wrap  -q  -R "." Top -I "."   CarrierType.v
+    Processing CarrierType.v
+        -MathClasses.orders.orders
+        +MathClasses.interfaces.orders
+        +MathClasses.theory.rings
+        +MathClasses.interfaces.abstract_algebra
+        +CoLoR.Util.Vector.VecUtil
+        -Ring
+        -Coq.Bool.Bool
+    Writing modified copy of CarrierType.v as CarrierType.v.new with 3 imports removed
+
+In the verbose mode, used above, it prints each imported module it
+attempts to remove. Modules marked with __+__ could not be removed,
+and modules marked with __-__ will be removed.
+
 ## Usage: 
 
     coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] <files...>

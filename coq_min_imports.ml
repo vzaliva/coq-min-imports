@@ -7,7 +7,7 @@ open BatIO
 open Dirtools
 
 (* TODO: match mutliline import statements *)
-let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(.+\\)\\.[\t ]*"
+let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(\\([A-Za-z_\\.]+\\)\\([ \t]+[A-Za-z_\\.]+\\)*\\)\\."
 
 let verbose = ref false
 let replace = ref false

@@ -1,7 +1,7 @@
 Require Import Bool.DecBool.
  Require Import Arith.Min.
 Require Import   Omega. (* comment *)
-Require Import BinNums  Coq.List Setoid.
+Require Import BinNums  List Setoid.
 Require Import Setoid. (* Presently for testing only. Consider moving it elsewhere *)
 
 (* requires Arith.Min *)

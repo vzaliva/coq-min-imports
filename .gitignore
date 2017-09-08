@@ -10,23 +10,16 @@
 *.glob
 *.aux
 
+# jbuild-generated files
+.merlin
+coq_min_imports.install
+
 # ocamlbuild working directory
 _build/
-
-# ocamlbuild targets
-*.byte
-*.native
-*.run
 
 # oasis generated files
 setup.data
 setup.log
-
-# Omake
-.omakedb
-.omakedb.lock
-OMakefile.omc
-OMakeroot.omc
 
 coq_min_imports
 *.new

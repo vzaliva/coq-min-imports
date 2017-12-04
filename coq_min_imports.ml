@@ -46,7 +46,7 @@ let parse_cmd_line () =
 let compile name quiet =
   let cmd = (!coqcmd) ^ " " ^ (String.concat " " !coqargs) ^ " " ^ name ^
               (if quiet then " > /dev/null 2>&1" else "") in
-  if !debug then Printf.printf "Executing: %s\n" cmd;
+  if !debug then Printf.eprintf "Executing: %s\n" cmd;
   BatSys.command cmd
 
 (** Try to compile given coq program and return exit code. *)
@@ -69,13 +69,13 @@ let rec process_require pre post lst res =
   | x::xs ->
      let nl = ((rev xs)@res) in
      let body = pre ^ (gen_import nl) ^ post in
-     if !debug then Printf.printf "\n==================\n %s \n==================\n" body;
+     if !debug then Printf.eprintf "\n==================\n %s \n==================\n" body;
      process_require pre post xs
                      (if try_compile body then
-                        (if !verbose then Printf.printf "\t-%s\n" x;
+                        (if !verbose then Printf.eprintf "\t-%s\n" x;
                          res)
                       else
-                        (if !verbose then Printf.printf "\t+%s\n" x;
+                        (if !verbose then Printf.eprintf "\t+%s\n" x;
                          (cons x res))
                      )
 
@@ -98,7 +98,7 @@ let rec process_imports s p saved =
       Not_found -> (s, saved)
 
 let process_file fname =
-  if !verbose then Printf.printf "Processing %s\n" fname;
+  if !verbose then Printf.eprintf "Processing %s\n" fname;
   let s = input_file fname in
   let (s',saved) = process_imports s (String.length s) 0 in
   if saved>0 then
@@ -108,24 +108,24 @@ let process_file fname =
       close_out out in
     if !replace then
       let backup_fname = fname ^ ".bak" in
-      (if !verbose then Printf.printf "Removing %d imports from %s (saving %s)\n" saved fname backup_fname) ; Sys.rename fname backup_fname ; dumpf fname s'
+      (if !verbose then Printf.eprintf "Removing %d imports from %s (saving %s)\n" saved fname backup_fname) ; Sys.rename fname backup_fname ; dumpf fname s'
     else
       let new_fname = fname ^ ".new" in
-      (if !verbose then Printf.printf "Writing modified copy of %s as %s with %d imports removed\n" fname new_fname saved) ; dumpf new_fname s'
+      (if !verbose then Printf.eprintf "Writing modified copy of %s as %s with %d imports removed\n" fname new_fname saved) ; dumpf new_fname s'
   else
-    (if !verbose then Printf.printf "Nothing to remove in %s\n" fname)
+    (if !verbose then Printf.eprintf "Nothing to remove in %s\n" fname)
   ; saved
 
 let () =
   try
     let (args,files) = parse_cmd_line () in
     if is_empty files then
-      (Printf.printf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] [-cmi-coqc=cmd]  <files...>\n" ; exit 1)
+      (Printf.eprintf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] [-cmi-coqc=cmd]  <files...>\n" ; exit 1)
     else
       (coqargs := tl args;
        let saved = fold_left (+) 0 (map process_file files) in
-       if !verbose then Printf.printf "Removed %d imports from %d files\n" saved (length files);
+       if !verbose then Printf.eprintf "Removed %d imports from %d files\n" saved (length files);
        if !wrap then exit (compile (String.concat " " files) false)
       )
   with
-    BadArg n -> Printf.printf "Unknown argument %s\n" n; exit 1
+    BadArg n -> Printf.eprintf "Unknown argument %s\n" n; exit 1

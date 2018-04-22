@@ -25,7 +25,7 @@ exception BadArg of string
 (** Parse command line, set options flags, and return pair containing list of coq options and list of .v files to be processed *)
 let parse_cmd_line () =
   let args = Array.to_list Sys.argv in
-  let fname_regexp = regexp "[A-Za-z_][A-Za-z_'0-9]+\\.v" in (* TODO: unicode *)
+  let fname_regexp = regexp "\\([A-Za-z_][A-Za-z_'0-9]*/\\)*[A-Za-z_][A-Za-z_'0-9]*\\.v" in (* TODO: unicode *)
   let (files, justargs) = partition (fun x -> string_match fname_regexp x 0) args in
   let (cmiargs, newargs) = partition (fun x -> BatString.starts_with x "-cmi-") justargs in
   let flags = [("-cmi-verbose", verbose) ; ("-cmi-replace", replace) ; ("-cmi-debug", debug) ; ("-cmi-wrap", wrap) ] in

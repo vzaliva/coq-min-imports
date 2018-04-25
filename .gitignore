@@ -12,7 +12,7 @@
 
 # jbuild-generated files
 .merlin
-coq_min_imports.install
+coq-min-imports.install
 
 # ocamlbuild working directory
 _build/
@@ -21,7 +21,6 @@ _build/
 setup.data
 setup.log
 
-coq_min_imports
 *.new
 *.bak
 *.vo

@@ -51,7 +51,7 @@ let compile name quiet =
 
 (** Try to compile given coq program and return exit code. *)
 let try_compile s =
-  let d = make_tmp_dir 0o755 ~prefix:"coq_min_imports" ~suffix:".tmpdir" in
+  let d = make_tmp_dir 0o755 ~prefix:"coq-min-imports" ~suffix:".tmpdir" in
   let (out, name) = open_temporary_out ~mode:[`create] ~suffix:".v" ~temp_dir:d () in
   write_line out s;
   close_out out;
@@ -120,7 +120,7 @@ let () =
   try
     let (args,files) = parse_cmd_line () in
     if is_empty files then
-      (Printf.eprintf "Usage: coq_min_imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] [-cmi-coqc=cmd]  <files...>\n" ; exit 1)
+      (Printf.eprintf "Usage: coq-min-imports <coq_flags> [-cmi-verbose] [-cmi-replace] [-cmi-wrap] [-cmi-coqc=cmd]  <files...>\n" ; exit 1)
     else
       (coqargs := tl args;
        let saved = fold_left (+) 0 (map process_file files) in

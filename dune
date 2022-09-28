@@ -1,0 +1,4 @@
+(executable
+ (name coq_min_imports)
+ (public_name coq-min-imports)
+ (libraries extlib batteries))

@@ -7,7 +7,7 @@ open BatIO
 open Dirtools
 
 (* TODO: match mutliline import statements *)
-let import_regexp = Str.regexp "^[ \t]*Require[ \t]+Import[ \t]+\\(\\([A-Za-z_\\.]+\\)\\([ \t]+[A-Za-z_\\.]+\\)*\\)\\."
+let import_regexp = Str.regexp "^\\([ \t]*\\(From[ \t]+[A-Za-z_\\.]*[ \t]+\\)?\\)Require[ \t]+Import\\(\\([ \n\t]+[A-Za-z_\\.]*[A-Za-z_]+\\)\\([ \n\t]+[A-Za-z_\\.]*[A-Za-z_]+\\)*\\)\\."
 
 let verbose = ref false
 let replace = ref false
@@ -59,25 +59,35 @@ let try_compile s =
   rmrf d ;
   (res == 0)
 
-let gen_import lst =
+let gen_import from lst =
   (if is_empty lst then "" else
-     "Require Import " ^ (String.concat " " lst) ^ ".\n")
+     from ^ "Require Import" ^ (String.concat "" lst) ^ ".")
 
-let rec process_require pre post lst res =
+let trim s = String.concat "" (Str.split (regexp "[ \n\t]+") s)
+
+let rec process_require from pre post lst res =
   match lst with
   | [] -> res
   | x::xs ->
      let nl = ((rev xs)@res) in
-     let body = pre ^ (gen_import nl) ^ post in
+     let body = pre ^ (gen_import from nl) ^ post in
      if !debug then Printf.eprintf "\n==================\n %s \n==================\n" body;
-     process_require pre post xs
+     process_require from pre post xs
                      (if try_compile body then
-                        (if !verbose then Printf.eprintf "\t-%s\n" x;
+                        (if !verbose then Printf.eprintf "\t-%s\n" (trim x);
                          res)
                       else
-                        (if !verbose then Printf.eprintf "\t+%s\n" x;
+                        (if !verbose then Printf.eprintf "\t+%s\n" (trim x);
                          (cons x res))
                      )
+
+let rec merge_delims lst =
+  match lst with
+  | [] -> []
+  | Str.Text t :: rst -> t :: merge_delims rst
+  | Str.Delim d :: Str.Text t :: rst -> (d ^ t) :: merge_delims rst
+  | Str.Delim d1 :: Str.Delim d2 :: rst -> merge_delims (Str.Delim (d1 ^ d2) :: rst)
+  | Str.Delim d :: [] -> []
 
 let rec process_imports s p saved =
   if p<0 then
@@ -85,14 +95,16 @@ let rec process_imports s p saved =
   else
     try
       let x = search_backward import_regexp s p in
-      let is = (matched_group 1 s) in
+      let from = (matched_group 1 s) in
+      let is = (matched_group 3 s) in
       let me = match_end () in
-      let il = Str.split (regexp "[ \t]+") is in
+      let il_delims = Str.full_split (regexp "[ \n\t]+") is in
+      let il = merge_delims il_delims in
       let pre = (string_before s x) in
       let post = (string_after s me) in
-      let il' = process_require pre post (rev il) [] in
+      let il' = process_require from pre post (rev il) [] in
       let saved' = length il - length il' in
-      let s' = if saved > 0 then s else pre ^ gen_import il' ^ post in
+      let s' = if saved > 0 then s else pre ^ gen_import from il' ^ post in
       process_imports s' (x-1) (saved+saved')
     with
       Not_found -> (s, saved)

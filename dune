@@ -1,0 +1,8 @@
+(env
+ (dev     (flags :standard -w -6))
+ (release (flags :standard -w -6)))
+
+(executable
+ (name       coq_min_imports)
+ (public_name coq-min-imports)
+ (libraries extlib batteries))

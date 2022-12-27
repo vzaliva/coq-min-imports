@@ -33,7 +33,7 @@ let parse_cmd_line () =
   ignore (map (fun n ->
               try
                 if BatString.contains n '=' then
-                  let (on,ov) = BatString.split n "=" in
+                  let (on,ov) = BatString.split n ~by:"=" in
                   assoc on options := ov
                 else
                   assoc n flags := true
